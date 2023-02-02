@@ -1,4 +1,4 @@
-const jwt = require('jwt-simple');
+const jwt    = require('jwt-simple');
 const moment = require('moment');
 
 // Importar clave secreta

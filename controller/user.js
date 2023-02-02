@@ -1,10 +1,11 @@
 const bcrypt = require('bcrypt');
-const user = require('../models/user');
+const user   = require('../models/user');
 
-const User = require('../models/user');
+const User      = require('../models/user');
 const { param } = require('../routes/user');
 
 const { createToken } = require('../helper/jwt');
+const { findOne, findById } = require('../models/user');
 
 
 
@@ -114,8 +115,31 @@ const login = async (req, res) => {
 
 }
 
+const profile = async (req, res) => {
+    // recibir parametro del id de usuario por la url
+    const id = req.params.id;
+
+    // Consultar datos usuario
+    const userDB = await User.findById(id).select({ password: 0, role: 0 });
+    if(!userDB){
+        return res.status(404).json({
+            status: 'error',
+            message: 'Usuario no existe'
+        });
+    }
+
+    return res.json({
+        status: 'success',
+        message: 'Profile',
+        userDB
+    });
+
+
+}
+
 module.exports = {
     testUser,
     register,
-    login
+    login,
+    profile
 }
