@@ -8,6 +8,7 @@ const {
     profile,
     register, 
     testUser,
+    update
 } = require('../controller/user');
 
 const auth = require('../middlewares/auth');
@@ -20,5 +21,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/profile/:id', [auth], profile);
 router.get('/list/:page?', [auth], list);
+router.put('/update', [auth], update);
+
 
 module.exports = router;

@@ -155,10 +155,58 @@ const list = async (req, res) => {
     });
 }
 
+const update = async (req, res) => {
+
+    // Cargar informacion del usuario que está en el req
+    let userIdentity = req.user;
+    let userToUpdate = req.body;
+
+    // Eliminar datos que no son requeridos
+    delete userToUpdate.iat;
+    delete userToUpdate.exp;
+    delete userToUpdate.role;
+    
+    // Comprobar que el usuario existe
+    const usuarioDB = await User.find({ $or: [
+        {email: userToUpdate.email.toLowerCase()},
+        {nick: userToUpdate.nick.toLowerCase()}
+    ]});
+
+    let userIsset = false;
+    usuarioDB.forEach(user => {
+        if(user && user._id != userIdentity.id)
+            userIsset = true;
+    })
+
+    if(userIsset){
+        return res.status(400).json({
+            status: 'error',
+            message: 'Usuario ya existe'
+        });
+    }
+    // Si llega password, cifrarla
+    if(userToUpdate.password){
+        const pwd = await bcrypt.hash(userToUpdate.password, 10);
+        userToUpdate.password = pwd;
+    }
+
+    // Buscar y actualizar
+    await User.findByIdAndUpdate(userIdentity.id, userToUpdate, {new: true});
+
+    return res.json({
+        status: 'success',
+        message: 'Update',
+        user: userToUpdate
+    });
+}
+
+
+
 module.exports = {
     testUser,
     register,
     login,
     profile,
-    list
+    list,
+    update
 }
