@@ -1,11 +1,9 @@
-const bcrypt = require('bcrypt');
-const user   = require('../models/user');
+const bcrypt             = require('bcrypt');
+const mongoosePagination = require('mongoose-pagination');
 
-const User      = require('../models/user');
-const { param } = require('../routes/user');
+const User = require('../models/user');
 
 const { createToken } = require('../helper/jwt');
-const { findOne, findById } = require('../models/user');
 
 
 
@@ -133,13 +131,34 @@ const profile = async (req, res) => {
         message: 'Profile',
         userDB
     });
+}
 
+const list = async (req, res) => {
+    // Controlar pagina actual
+    let page = (req.params.page) ? parseInt(req.params.page) : 1;
 
+    // Consulta con mongoose pagination
+    const itemsPerPage = 5;
+    const [total, list] = await Promise.all([
+        User.countDocuments(),
+        User.find().sort('_id').paginate(page, itemsPerPage)
+    ])
+
+    return res.json({
+        status: 'success',
+        message: 'Pagination',
+        list,
+        page,
+        itemsPerPage,
+        total,
+        pages: Math.ceil(total/itemsPerPage)
+    });
 }
 
 module.exports = {
     testUser,
     register,
     login,
-    profile
+    profile,
+    list
 }
