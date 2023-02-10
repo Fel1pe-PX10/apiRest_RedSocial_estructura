@@ -1,4 +1,19 @@
 const express = require('express');
+
+const multer = require('multer');
+
+// Configuracion subida multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './uploads/avatars/')
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'avatar-'+Date.now()+'-'+file.originalname)
+    }
+})
+// Middleware de uploads
+const updloads = multer({storage});
+
 const router  = express.Router();
 
 //const UserControler = require('../controller/user');
@@ -8,7 +23,9 @@ const {
     profile,
     register, 
     testUser,
-    update
+    update,
+    upload,
+    getAvatar
 } = require('../controller/user');
 
 const auth = require('../middlewares/auth');
@@ -22,6 +39,8 @@ router.post('/login', login);
 router.get('/profile/:id', [auth], profile);
 router.get('/list/:page?', [auth], list);
 router.put('/update', [auth], update);
+router.post('/upload', [auth, updloads.single('file0')], upload);
+router.get('/avatar/:file', [auth], getAvatar);
 
 
 module.exports = router;

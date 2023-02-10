@@ -1,6 +1,8 @@
 const bcrypt             = require('bcrypt');
 const mongoosePagination = require('mongoose-pagination');
 
+const fs = require('fs');
+
 const User = require('../models/user');
 
 const { createToken } = require('../helper/jwt');
@@ -200,13 +202,71 @@ const update = async (req, res) => {
     });
 }
 
+const upload = (req, res) => {
 
+    // Recoger el archivo y comprobar que existe
+    if(!req.file){
+        return res.status(404).json({
+            status: 'error',
+            message: 'No existe un archivo tipo imagen'
+        });
+    }
+
+    // Conseguir el nombre del archivo
+    const image = req.file.originalname;
+
+    // Sacar extensión y comprobar, si es correcta guardar archivo. Si no es correcta borrar archivo
+    const imageSplit = image.split('\.');
+    const extension = imageSplit[1];
+
+    
+
+    if(extension != 'png' && extension != 'jpg' && extension != 'jpeg' && extension != 'gif'){
+
+        const filePath = req.file.path;
+
+        fs.unlinkSync(filePath);
+
+        return res.status(400).json({
+            status: 'error',
+            message: 'Formato de imagen no soportado'
+        });
+    }
+
+    
+
+    User.findOneAndUpdate(req.user.id, {image: req.file.filename}, {new:true}, (err, userUpdate) => {
+
+        if(err){
+            return res.status(500).json({
+                status: 'error',
+                message: 'Error guardando la imagen en la DB'
+            });
+        }
+
+        if(userUpdate){
+            return res.json({
+                status: 'success',
+                userUpdate
+            });
+        }
+    });
+}
+
+const getAvatar = (req, res) => {
+    return res.json({
+        status: 'success',
+        message: 'avatar'
+    });
+}
 
 module.exports = {
-    testUser,
-    register,
-    login,
-    profile,
     list,
-    update
+    login,
+    getAvatar,
+    profile,
+    register,
+    testUser,
+    update,
+    upload
 }
