@@ -2,6 +2,7 @@ const bcrypt             = require('bcrypt');
 const mongoosePagination = require('mongoose-pagination');
 
 const fs = require('fs');
+const path = require('path');
 
 const User = require('../models/user');
 
@@ -254,10 +255,27 @@ const upload = (req, res) => {
 }
 
 const getAvatar = (req, res) => {
-    return res.json({
-        status: 'success',
-        message: 'avatar'
-    });
+
+    // Sacar parametro url
+    const file = req.params.file;
+
+    // Montar el path real de la imagen
+    const filePath = './uploads/avatars/'+file;
+
+    // comprobar que existe y devolver file
+    fs.stat(filePath, (err, exist) => {
+        
+        if(!exist){
+            return res.status(404).json({
+                status: 'error',
+                message: 'No existe imagen'
+            });
+        }
+
+       return res.sendFile(path.resolve(filePath));
+    })
+
+    
 }
 
 module.exports = {
