@@ -236,7 +236,7 @@ const upload = (req, res) => {
 
     
 
-    User.findOneAndUpdate(req.user.id, {image: req.file.filename}, {new:true}, (err, userUpdate) => {
+    User.findOneAndUpdate({_id:req.user.id}, {image: req.file.filename}, {new:true}, (err, userUpdate) => {
 
         if(err){
             return res.status(500).json({
