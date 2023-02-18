@@ -1,3 +1,6 @@
+// Dependencias
+const mongoosePaginate = require('mongoose-pagination');
+
 // Modelos
 const Follow = require('../models/follow');
 const User   = require('../models/user');
@@ -72,12 +75,59 @@ const unfollow = async (req, res) => {
     });
 }
 
-// Accion listar usuarios que cualquir usuaro está siguiendo
+// Accion listar usuarios que cualquir usuaro está siguiendo (siguiendo)
+const FollowinList = async(req, res) => {
 
-// Accion listar de usuarios que me siguen
+    // Obtener el id del usuario identificado si llega un parametro asignarlo a esa constante
+    const userId = (req.param.id) ? req.param.id : req.user.id;
+
+    // Comprobar si me llega la pagina, si no dejar la pagina 1
+    const page = (req.params.page) ? req.params.page : 1;
+
+    // Usuarios por pagina a mostrar
+    const userPerPage = 5;
+
+    // Find a follow, popular datos de los usuarios y paginar con mongoose paginate
+    const [total, follows] = await Promise.all([
+        Follow.countDocuments(),
+        Follow.find({user: userId})
+                                .populate('user followed', '-password -role -__v')
+                                .paginate(page, userPerPage)
+    ]);
+    
+    if(follows.length === 0){
+        return res.status(200).json({
+            status: 'success',
+            message: 'No se está siguiendo a nadie'
+        });
+    }
+
+
+    // Listado de usuario de trinity y soy victor 
+    // Sacar un array de ids de los usuarios que me siguen y los que sigo como victor
+
+
+    return res.status(200).json({
+        status: 'success',
+        message: 'Followin list ',
+        follows,
+        total,
+        pages: Math.ceil(total/userPerPage)
+    });
+}
+
+// Accion listar de usuarios que siguen a cualquier otro usuario (seguidores)
+const FollowersList = (req, res) => {
+    return res.status(200).json({
+        status: 'success',
+        message: 'Followed list '
+    });
+}
 
 module.exports = {
+    FollowinList,
+    FollowersList,
     testFollow,
     saveFollow,
-    unfollow
+    unfollow,
 }
