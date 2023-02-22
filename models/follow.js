@@ -11,7 +11,7 @@ const FollowSchema = Schema({
     },
     create_at: {
         type: Date,
-        defalt: Date.now
+        defalt: Date.now()
     }
 });
 

@@ -5,6 +5,8 @@ const mongoosePaginate = require('mongoose-pagination');
 const Follow = require('../models/follow');
 const User   = require('../models/user');
 
+const { followUserIds } = require('../services/followService');
+
 // Acciones de prueba
 const testFollow = (req, res) => {
     return res.json({
@@ -76,7 +78,7 @@ const unfollow = async (req, res) => {
 }
 
 // Accion listar usuarios que cualquir usuaro está siguiendo (siguiendo)
-const FollowinList = async(req, res) => {
+const FollowingList = async(req, res) => {
 
     // Obtener el id del usuario identificado si llega un parametro asignarlo a esa constante
     const userId = (req.param.id) ? req.param.id : req.user.id;
@@ -102,14 +104,15 @@ const FollowinList = async(req, res) => {
         });
     }
 
-
-    // Listado de usuario de trinity y soy victor 
     // Sacar un array de ids de los usuarios que me siguen y los que sigo como victor
+    const followsUserIds = await followUserIds(req.user.id);
 
 
     return res.status(200).json({
         status: 'success',
         message: 'Followin list ',
+        folliwing: followsUserIds.following,
+        folliwing_me: followsUserIds.followers,
         follows,
         total,
         pages: Math.ceil(total/userPerPage)
@@ -117,15 +120,47 @@ const FollowinList = async(req, res) => {
 }
 
 // Accion listar de usuarios que siguen a cualquier otro usuario (seguidores)
-const FollowersList = (req, res) => {
+const FollowersList = async (req, res) => {
+    // Obtener el id del usuario identificado si llega un parametro asignarlo a esa constante
+    const userId = (req.param.id) ? req.param.id : req.user.id;
+
+    // Comprobar si me llega la pagina, si no dejar la pagina 1
+    const page = (req.params.page) ? req.params.page : 1;
+
+    // Usuarios por pagina a mostrar
+    const userPerPage = 5;
+
+    // Find a follow, popular datos de los usuarios y paginar con mongoose paginate
+    const [total, followers] = await Promise.all([
+        Follow.countDocuments(),
+        Follow.find({followed: userId})
+                                .populate('user followed', '-password -role -__v')
+                                .paginate(page, userPerPage)
+    ]);
+    
+    if(followers.length === 0){
+        return res.status(200).json({
+            status: 'success',
+            message: 'No se está siguiendo a nadie'
+        });
+    }
+
+    // Sacar un array de ids de los usuarios que me siguen y los que sigo como victor
+    const followsUserIds = await followUserIds(req.user.id);
+
     return res.status(200).json({
         status: 'success',
-        message: 'Followed list '
+        message: 'Followers list ',
+        followers,
+        total,
+        pages: Math.ceil(total/userPerPage),
+        folliwing: followsUserIds.following,
+        folliwing_me: followsUserIds.followers,
     });
 }
 
 module.exports = {
-    FollowinList,
+    FollowingList,
     FollowersList,
     testFollow,
     saveFollow,

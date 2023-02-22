@@ -8,6 +8,8 @@ const User = require('../models/user');
 
 const { createToken } = require('../helper/jwt');
 
+const { followUserIds, followThisUser } = require('../services/followService');
+
 
 
 // Acciones de prueba
@@ -129,10 +131,15 @@ const profile = async (req, res) => {
         });
     }
 
+    // Informacion de seguieminto
+    const followInfo = await followThisUser(req.user.id, id);
+
     return res.json({
         status: 'success',
         message: 'Profile',
-        userDB
+        userDB,
+        following: followInfo.following,
+        follower: followInfo.follower
     });
 }
 
@@ -147,6 +154,9 @@ const list = async (req, res) => {
         User.find().sort('_id').paginate(page, itemsPerPage)
     ])
 
+    // Sacar un array de ids de los usuarios que me siguen y los que sigo como victor
+    const followsUserIds = await followUserIds(req.user.id);
+
     return res.json({
         status: 'success',
         message: 'Pagination',
@@ -154,7 +164,9 @@ const list = async (req, res) => {
         page,
         itemsPerPage,
         total,
-        pages: Math.ceil(total/itemsPerPage)
+        pages: Math.ceil(total/itemsPerPage),
+        folliwing: followsUserIds.following,
+        folliwing_me: followsUserIds.followers
     });
 }
 
