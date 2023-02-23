@@ -1,4 +1,8 @@
+// Importar Modulos
+const fs   = require('fs');
+const path = require('path');
 
+// Importar modelos
 const Publication = require('../models/publication');
 
 // Acciones de prueba
@@ -7,7 +11,6 @@ const testPublication = (req, res) => {
         mensaje: 'Mensaje Publication Controller'
     })
 }
-
 
 // Guardar publicacion
 const save = async(req, res) => {
@@ -132,17 +135,93 @@ const listPublications = async (req, res) => {
     
 }
 
-// Listar publicaciones 
-
 // Subir ficheros
+const upload = (req, res) => {
+
+    // Obtener el id de la publicacion a subir el archivo
+    const publicationId = req.params.publicationId;
+
+    // Recoger el archivo y comprobar que existe
+    if(!req.file){
+        return res.status(404).json({
+            status: 'error',
+            message: 'No existe un archivo tipo imagen'
+        });
+    }
+
+    // Conseguir el nombre del archivo
+    const image = req.file.originalname;
+
+    // Sacar extensión y comprobar, si es correcta guardar archivo. Si no es correcta borrar archivo
+    const imageSplit = image.split('\.');
+    const extension = imageSplit[1];
+
+    
+
+    if(extension != 'png' && extension != 'jpg' && extension != 'jpeg' && extension != 'gif'){
+
+        const filePath = req.file.path;
+
+        fs.unlinkSync(filePath);
+
+        return res.status(400).json({
+            status: 'error',
+            message: 'Formato de imagen no soportado'
+        });
+    }
+
+    
+
+    Publication.findOneAndUpdate({user:req.user.id, _id:publicationId}, {file: req.file.filename}, {new:true}, (err, publicationUpdate) => {
+
+        if(err){
+            return res.status(500).json({
+                status: 'error',
+                message: 'Error guardando la imagen en la DB'
+            });
+        }
+
+        if(publicationUpdate){
+            return res.json({
+                status: 'success',
+                publicationUpdate,
+                file: req.file
+            });
+        }
+    });
+}
 
 // Devolver archivos multimedia imagenes
+const getMedia = (req, res) => {
 
+    // Sacar parametro url
+    const file = req.params.file;
+
+    // Montar el path real de la imagen
+    const filePath = './uploads/publications/'+file;
+
+    // comprobar que existe y devolver file
+    fs.stat(filePath, (err, exist) => {
+        
+        if(!exist){
+            return res.status(404).json({
+                status: 'error',
+                message: 'No existe imagen'
+            });
+        }
+
+       return res.sendFile(path.resolve(filePath));
+    })
+
+    
+}
 
 module.exports = {
     deletePublication,
+    getMedia,
     listPublications,
     publicationOne,
     save,
-    testPublication
+    testPublication,
+    upload
 }
