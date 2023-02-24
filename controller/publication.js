@@ -5,6 +5,9 @@ const path = require('path');
 // Importar modelos
 const Publication = require('../models/publication');
 
+// Importar servicios
+const followServices = require('../services/followService');
+
 // Acciones de prueba
 const testPublication = (req, res) => {
     return res.json({
@@ -212,12 +215,55 @@ const getMedia = (req, res) => {
 
        return res.sendFile(path.resolve(filePath));
     })
+}
 
+// Listar todas las publicaciones (FEED)
+const feed = async(req, res) => {
+    // Obtener pagina actual
+    const page = (!req.param.page) ? 1 : req.param.page;
+
+    // Establecer numero de elementos por pagina
+    const itemsPerPage = 5;
+    
+    try {
+        // Obtener array de identificadores de usuarios que yo sigo como usuario logueado
+        const myFollows = await followServices.followUserIds(req.user.id);
+    
+        // Find a las publicaciones (in, order, popular, paginar)
+
+        const [publications, total] = await Promise.all([
+            Publication.find({user: myFollows.following})
+                .populate('user', '-password -role -__v -email')
+                .sort('-create_at')
+                .paginate(page, itemsPerPage), 
+            Publication.countDocuments({user: myFollows.following})
+        ]) 
+
+        return res.status(200).json({
+            status: 'success',
+            page,
+            itemsPerPage,
+            total,
+            pages: Math.ceil(total/itemsPerPage),
+            follows: myFollows.following,
+            publications
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error consultando la lista de seguidores'
+        });
+    }
+
+
+    
     
 }
 
 module.exports = {
     deletePublication,
+    feed,
     getMedia,
     listPublications,
     publicationOne,

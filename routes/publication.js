@@ -16,7 +16,7 @@ const updloads = multer({storage});
 
 const auth = require('../middlewares/auth');
 
-const { testPublication, save, publicationOne, deletePublication, listPublications, upload, getMedia } = require('../controller/publication');
+const { testPublication, save, publicationOne, deletePublication, listPublications, upload, getMedia, feed } = require('../controller/publication');
 
 // Definicion de rutas
 router.get('/prueba-publication', testPublication);
@@ -26,5 +26,6 @@ router.delete('/delete/:id', [auth], deletePublication);
 router.get('/listPublications/:user/:page?', [auth], listPublications);
 router.post('/upload/:publicationId', [auth, updloads.single('file0')], upload);
 router.get('/media/:file', [auth], getMedia);
+router.get('/feed/:page?', [auth], feed);
 
 module.exports = router;
