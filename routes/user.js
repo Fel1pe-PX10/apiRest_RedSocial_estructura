@@ -25,7 +25,8 @@ const {
     testUser,
     update,
     upload,
-    getAvatar
+    getAvatar,
+    counters
 } = require('../controller/user');
 
 const auth = require('../middlewares/auth');
@@ -41,6 +42,7 @@ router.get('/list/:page?', [auth], list);
 router.put('/update', [auth], update);
 router.post('/upload', [auth, updloads.single('file0')], upload);
 router.get('/avatar/:file', [auth], getAvatar);
+router.get('/counters/:id?', [auth], counters);
 
 
 module.exports = router;

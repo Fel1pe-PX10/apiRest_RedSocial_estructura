@@ -4,7 +4,9 @@ const mongoosePagination = require('mongoose-pagination');
 const fs = require('fs');
 const path = require('path');
 
-const User = require('../models/user');
+const Follow       = require ('../models/follow');
+const Publications = require('../models/publication');
+const User         = require('../models/user');
 
 const { createToken } = require('../helper/jwt');
 
@@ -204,6 +206,9 @@ const update = async (req, res) => {
         const pwd = await bcrypt.hash(userToUpdate.password, 10);
         userToUpdate.password = pwd;
     }
+    else{
+        delete userToUpdate.password;
+    }
 
     // Buscar y actualizar
     await User.findByIdAndUpdate(userIdentity.id, userToUpdate, {new: true});
@@ -290,7 +295,37 @@ const getAvatar = (req, res) => {
     
 }
 
+const counters = async(req, res) => {
+    
+    const userId = (!req.params.id) ? req.user.id : req.params.id;
+    
+    try {
+        const following = await Follow.count({user: userId});
+
+        const followed = await Follow.count({followed: userId});
+
+        const publications = await Publications.count({user: userId});
+
+        return res.json({
+            status: 'success',
+            following,
+            followed,
+            publications
+        });
+
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            status: 'error',
+            message: 'Error al consultar estadisticas de counters'
+        });
+    }
+}
+
 module.exports = {
+    counters,
     list,
     login,
     getAvatar,
